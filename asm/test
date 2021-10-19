@@ -1,0 +1,243 @@
+	.data
+	.align 0
+in_base: .asciiz "Digite a base do numero a ser convertido (B para binário, D para decimal, H para hexadecimal): "
+in_num: .asciiz "Digite o numero a ser convertido (letras minusculas para hexadecimal): "
+in_newbase: .asciiz "Digite a nova base do numero (B para binário, D para decimal, H para hexadecimal): "
+out_number: .asciiz "O numero na nova base eh "
+err_string: .asciiz "O valor entrado e invalido. Fim do programa."
+
+input_number: .space 32
+output_number: .space 32
+
+	.text
+	.globl main
+main:
+	li $v0, 4			# Código para print_string
+	la $a0, in_base			# in_base será a string printada
+	syscall
+	
+	li $v0, 12			# Código para read_char (ler a base)
+	syscall
+	
+    	move $s0, $v0			# Salva o char lido (base de entrada) no registrador $s0
+    	
+    	li $v0, 11              	# Código para print_char
+	li $a0, '\n'            	# Carrega a quebra de linha
+	syscall
+	
+	li $v0, 4			#Código para print_string
+	la $a0, in_num			#in_num será a string printada
+	syscall
+	
+    	li $v0, 8       		# Código para read_string
+    	la $a0, input_number  		# carrega o espaço de bytes no endereço input_number
+    	li $a1, 32      		# aloca os 32 bytes para a string
+    	move $s1, $a0   		# salva o "numero" lido em $s1
+    	syscall
+	
+    	move $t0, $s1   		# copia o numero lido para $t0
+    	
+	li $v0, 4			#Código para print_string
+	la $a0, in_newbase		#in_novabase será a string printada
+	syscall
+	
+	li $v0, 12			#Código para read_char (ler a nova base)
+	syscall
+	
+	move $s2, $v0			#Salva o numero lido (nova base) no registrador $s2
+	
+    	li $v0, 11              	# Código para print_char
+	li $a0, '\n'            	# Carrega a quebra de linha
+	syscall
+	
+    	la $t3, input_number		# salva em t3 o endereço do primeiro byte do numero de entrada
+	li $t9, 0			# t9 será utilizado como um contador, logo foi setado para 0
+	
+	la $t1, output_number		# salva em t1 o endereço do primeiro byte do numero de saida
+	
+	li $v0, 4			#Código para print_string
+	la $a0, out_number		# out_number será a string printada
+	syscall				# printa o começo da mensagem de output
+	
+    	j lastNumberPositionOnTheArray
+    	
+## Base de entrada em $s0
+## String valor em $s1
+## Base nova $s2
+## Numero convertido em decimal em $s3
+
+############## FUNÇÕES AUXILIARES ##############
+
+lastNumberPositionOnTheArray:
+	# Vai contar quantos bytes do array estão sendo utilizados
+	# para determinar em que byte as funções from***StringToDecimal
+	# vão iniciar a contagem
+	# Esse valor ficará salvo em $t9
+	lb $t5, 0($t3)
+	
+	beq $t5, '\0', firstConversion
+	beq $t5, '\n', firstConversion
+	
+	addi $t9, $t9, 1
+	addi $t3, $t3, 1
+	
+	j lastNumberPositionOnTheArray
+
+################################################
+##############     OPERAÇÕES      ##############
+
+firstConversion:
+	la $t3, input_number		# Carrega para $t3 o "numero" de entrada
+	
+	# O t9 será decrementado de 1, pois no fim da função lastNumberPositionOnTheArray
+	# ele conta no t9 quando houver \n ou \0, coisa que não queremos, mas, sim, apenas
+	# o último "número"
+	addi $t9, $t9, -1
+	
+	add $t3, $t3, $t9		# Começa no final do vetor ($t9 é definido na func lastNumberPositionOnTheArray)
+	li $t4, 1			# Será o contador de posição
+	li $s3, 0			# s3 conterá o vetor convertido em numero decimal
+	
+	# Desvia para converter para numero decimal a partir da base de entrada
+	beq $s0, 'D', fromDecimalStringToDecimal
+	beq $s0, 'B', fromBinStringToDecimal
+	beq $s0, 'H', fromHexStringToDecimal
+
+fromDecimalStringToDecimal:
+	lb $t5, 0($t3)			# t5 recebe o byte do endereço do primeiro byte de t3 (vetor input_number)
+	beq  $t5, '\0', end_conversion
+	blt $t5, '0', erro
+	bgt $t5, '9', erro
+	addi $t5, $t5, -48		# Converte o char para int
+	
+	addi $t3, $t3, -1		# Decrementa a posição do vetor (t3 = t3 - 1)
+	
+	mul $t5, $t5, $t4		# t5 = t5 * t4
+	li $t6, 10			# t6 = 10
+	mul $t4, $t4, $t6               # t4 = t4 * t6
+	add $s3, $s3, $t5		# s3 = s3 + t5
+	
+	j fromDecimalStringToDecimal
+	
+fromBinStringToDecimal:
+	lb $t5, 0($t3)			# t5 recebe o byte do endereço do primeiro byte de t3 (vetor input_number)
+	beq  $t5, '\0', end_conversion
+	blt $t5, '0', erro
+	bgt $t5, '1', erro
+	addi $t5, $t5, -48		# Converte o char para int
+	
+	addi $t3, $t3, -1		# Decrementa a posição do vetor (t3 = t3 - 1)
+	
+	mul $t5, $t5, $t4		# t5 = t5 * t4
+	li $t6, 2			# t6 = 10
+	mul $t4, $t4, $t6               # t4 = t4 * t6
+	add $s3, $s3, $t5		# s3 = s3 + t5
+	
+	j fromBinStringToDecimal
+	
+fromHexStringToDecimal:
+	lb $t5, 0($t3)			# t5 recebe o byte do endereço do primeiro byte de t3 (vetor input_number)
+	beq  $t5, '\0', end_conversion
+	
+	blt $t5, '0', erro
+	bgt $t5, '9', teste
+	
+	j fromHexStringToDecimal
+
+teste:
+	blt $t5, 'a', erro
+	bgt $t5, 'f', erro
+	
+	bge $t5, 97, ifNumberIsBiggerThan
+	addi $t5, $t5, -48		# Converte o char para int
+	
+	addi $t3, $t3, -1		# Decrementa a posição do vetor (t3 = t3 - 1)
+	
+	mul $t5, $t5, $t4		# t5 = t5 * t4
+	li $t6, 16			# t6 = 10
+	mul $t4, $t4, $t6               # t4 = t4 * t6
+	add $s3, $s3, $t5		# s3 = s3 + t5
+	
+	j fromHexStringToDecimal
+	
+	
+ifNumberIsBiggerThan:
+	addi $t5, $t5, -87		# Converte o char para int
+	
+	addi $t3, $t3, -1		# Decrementa a posição do vetor (t3 = t3 - 1)
+	
+	mul $t5, $t5, $t4		# t5 = t5 * t4
+	li $t6, 16			# t6 = 10
+	mul $t4, $t4, $t6               # t4 = t4 * t6
+	add $s3, $s3, $t5		# s3 = s3 + t5
+	
+	j fromHexStringToDecimal
+	
+end_conversion:
+	# recebe o numero convertido em decimal, salvo em $s3
+	beq $s2, 'D', print_messages
+	beq $s2, 'B', toBin
+	beq $s2, 'H', toHex
+
+toBin:
+	div $t0, $t0, 2           	# Salva em $t0 o resultado da divisão
+    	mfhi $t1			# Salva na posição do vetor, o resto dessa divisão
+    	
+    	sw $t1, 0($t2)
+    	addi $t2, $t2, 4
+    	ble $t0, 0, loop_print		# Checa se o resultado da divisão é menor do que o valor lido
+					# se for, vai para checagem para base requerida
+    	j toBin
+
+toHex:
+	div $t0, $t0, 16           	# Salva em $t0 o resultado da divisão
+    	mfhi $t1			# Salva na posição do vetor, o resto dessa divisão
+    
+    	bgt $t1, 9, convertToHex
+    	sw $t1, 0($t2)
+    	addi $t2, $t2, 4
+    	ble $t0, 0, loop_print		# Checa se o resultado da divisão é menor do que o valor lido
+                                        # se for, vai para checagem para base requerida
+    	j toHex
+
+convertToHex:
+	addi $t1, $t1, 87		# Converte se > 9 para abcdef
+	
+	sw $t1, 0($t2)
+    	addi $t2, $t2, 4
+    	ble $t0, 0, loop_print		# Checa se o resultado da divisão é menor do que o valor lido
+                                        # se for, vai para checagem para base requerida
+    	j toHex
+	
+################################################
+
+erro:
+	#printa msg de erro
+	li $v0, 55
+	la $a0, err_string
+	li $a1, 3
+	syscall
+	
+	j fim
+
+loop_print:
+    	beq $t2, $s3, fim
+    
+    	addi $t2, $t2, -4
+    	lw $t1, 0($t2)
+
+    	li $v0, 1
+    	la $a0, 0($t1)
+    	syscall
+    
+    	j loop_print
+
+print_messages:
+	
+	li $v0, 1
+	move $a0, $s3
+	syscall
+
+fim:
+	li $v0, 10			# 10 é código para o fim do programa
+	syscall
