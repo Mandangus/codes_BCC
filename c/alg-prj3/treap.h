@@ -1,0 +1,12 @@
+typedef struct treap t_t;
+typedef struct no no_t;
+char* read_line();
+int comando(char* entry);
+int comando_printf(char* entry);
+//no_t* remover(no_t* raiz,int chave);
+//void printar(no_t* raiz);
+//void printar_larg(no_t* raiz);
+void update(no_t* raiz);
+//void printar_pos(no_t* raiz);
+void insert(no_t* raiz,int chave,int prio);
+int busca(no_t* raiz,int chave);

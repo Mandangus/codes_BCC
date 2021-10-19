@@ -1,0 +1,13 @@
+typedef struct skip_list slist_t;
+typedef struct no no_t;
+slist_t* initialize(int max);
+void destroy(slist_t* list);
+no_t* busca(slist_t* list,char* termo);
+void insert(slist_t* list,int key,char* termo);
+void retirar(slist_t* list,int key,char* termo);
+char* read_line(int chave);
+int read_entry(char* entry);
+void imprime(slist_t* list,char letra);
+void printar(no_t* atual);
+void altera(slist_t* list,char*termo);
+void imprime(slist_t* list,char c1);
