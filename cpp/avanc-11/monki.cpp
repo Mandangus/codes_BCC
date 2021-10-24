@@ -5,19 +5,21 @@
 typedef long long unsigned int llu;
 int k;
 
-void solve(int vect[],int min,int max,int biggest){
-    if (max == min)
+int f(int pulo,int vect[],int tam){//função do pulo no bambu
+    int start = 0;//começo do pulo
+    for (int i = 0; i < tam; i++)
     {
-        return;
+        int tamPulo = vect[i] - start;
+        if(tamPulo < pulo){// se for válido pulamos
+            start += tamPulo;
+        } else if(tamPulo == pulo){// se for igual ao pulo máximo vamos decrementar!!
+            start += tamPulo;
+            pulo--;
+        } else return -10000;// falhou o pulo!!! retorna -inf
     }
-    
-    for (int i = min; i < max-1; i++)
-    {
-        int diff = vect[i+1] - vect[i];
-        if(diff > biggest) biggest = diff;
-    }
-    
+    return pulo;// completamos o bambu retorna o valor de k finalizado da função
 }
+
 
 
 int main(){
@@ -34,20 +36,22 @@ int main(){
         }
 
         k = 0;
-        int biggest = 0, indexBig = 0;//maior pulo do caso
-        for (int i = 0; i < n-1; i++)
+        
+        int max = n, min = 0;
+        while (max - min > 0)
         {
-            int diff = vect[i+1] - vect[i];
-            if(diff > biggest){
-                biggest = diff;
-                indexBig = i;
-            } 
+            if(f(max,vect,n)>=0){
+                max = min + (max - min)/2;
+            } else{
+                min = max;
+                max = max + max/2;
+            }
         }
-        solve(vect,indexBig,n,biggest);
 
-
-
+        k = max + 1;
         count++;
+        
+        printf("Case %d: %d\n",count,k);
     }
     
     
