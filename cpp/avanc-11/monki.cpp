@@ -37,7 +37,7 @@ int main(){
 
         k = 0;
         
-        int max = n, min = 0;
+        int max = n+1, min = 0;
         while (max - min > 0)
         {
             if(f(max,vect,n)>=0){
