@@ -9,7 +9,7 @@ int main(){
     while (cases--)
     {
         
-        int number,n;
+        int number;
         cin >> number;
 
         if(number < 10)
